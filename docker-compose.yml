@@ -1,0 +1,39 @@
+version: '3.8'
+
+services: 
+  postgres-meta-db:
+    image: postgres:${POSTGRES_VERSION}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment: 
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+  influxdb-data-db:
+    image: influxdb:${INFLUXDB_VERSION}
+    ports:
+      - ${INFLUXDB_PORTS}
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=db0
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_USERNAME}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_PASSWORD}
+
+  model-manager:
+    build: 
+      context: ./model_manager
+      dockerfile: Dockerfile 
+    volumes: 
+      - .model_manager/src:/src
+    ports:
+      - ${MODEL_MANAGER_PORTS}
+    command: uvicorn __main__:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - postgres-meta-db
+      - influxdb-data-db
+    
+volumes:
+  postgres_data:
+  influxdb-storage:
