@@ -1,10 +1,8 @@
 from itertools import product
-from operator import itemgetter
 from copy import deepcopy
 
 from api.models.dynamic_loader import DynamicLoader
 from api.metrics.metrics_api import MetricsAPI
-import matplotlib.pyplot as plt
 from loguru import logger
 
 
