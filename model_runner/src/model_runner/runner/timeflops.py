@@ -1,5 +1,6 @@
 from itertools import product
 from operator import itemgetter
+from copy import deepcopy
 
 from api.models.dynamic_loader import DynamicLoader
 from api.metrics.metrics_api import MetricsAPI
@@ -47,7 +48,7 @@ class TimeFlops:
         return params_set
 
     def _evaluate_model(
-        self, model, model_name: str, test_data, metrics_api: MetricsAPI, params: dict
+        self, model, test_data, metrics_api: MetricsAPI, params: dict
     ) -> dict:
         try:
             test_predictions = model.forecast(len(test_data))
@@ -60,17 +61,17 @@ class TimeFlops:
             return {}
 
         report = {
-            "model_name": model_name,
             "params": params,
-            "metrics_value": {},
+            "metrics": [],
         }
         for metric in metrics_api.get_metrics():
-            report["metrics_value"][metric.name] = metric.calculate(
-                test_data[self.target], test_predictions
-            )
+            current_metric = deepcopy(metric)
+            current_metric.calculate_result(test_data[self.target], test_predictions)
+            report["metrics"].append(current_metric)
+
         return report
 
-    def _select_best_by_metric_result(self, reports: list) -> list:
+    def _select_best_by_metric_result(self) -> list:
         pass
 
     def search_best_models(
@@ -79,6 +80,7 @@ class TimeFlops:
         target: str = "target",
         split_coef: float = 0.8,
         params_selection: bool = True,
+        evaluate_metrics: str = "all",
         selection_metric: str = "",
     ):
         self.data = data
@@ -86,9 +88,14 @@ class TimeFlops:
 
         train, test = self._split_train_test(self.data, split_coef)
 
-        metrics_api = MetricsAPI("all")
-        best_reports = []
+        metrics_api = MetricsAPI(evaluate_metrics)
 
+        if not selection_metric:
+            logger.warning(
+                "It'll be impossibe to select best model without selection metric"
+            )
+
+        self.best_reports = {}
         for model_name, model_data in self.models.items():
             model_class = model_data.get("class")
             model_params = model_data.get("params")
@@ -107,21 +114,43 @@ class TimeFlops:
                     train,
                     self.target,
                 )
+                self.models[model_name]["current_model"] = model
 
-                report = self._evaluate_model(
-                    model, model_name, test, metrics_api, prepared_params
-                )
+                report = self._evaluate_model(model, test, metrics_api, prepared_params)
 
                 if report:
                     reports.append(report)
 
-                    self.models[model_name]["best_model"] = model
+                    if selection_metric:
+                        target_metric = next(
+                            metr
+                            for metr in report.get("metrics")
+                            if metr.name == selection_metric
+                        )
+                        # TODO: report class
+                        # TODO: separate logic
+                        if not self.models[model_name].get("best_metric_val"):
+                            self.models[model_name][
+                                "best_metric_val"
+                            ] = target_metric.result_value
+                            self.models[model_name]["best_model"] = model
+                            self.best_reports[model_name] = report
+                            continue
 
-            best_report = max(
-                reports, key=lambda x: x["metrics_value"][selection_metric]
-            )
-            best_reports.append(best_report)
-        logger.info(best_reports)
+                        if (
+                            target_metric.best_when == "min"
+                            and self.models[model_name]["best_metric_val"]
+                            > target_metric.result_value
+                        ) or (
+                            target_metric.best_when == "max"
+                            and self.models[model_name]["best_metric_val"]
+                            < target_metric.result_value
+                        ):
+                            self.models[model_name]["best_model"] = model
+                            self.best_reports[model_name] = report
+
+    def get_best_reports(self) -> dict:
+        return self.best_reports if self.best_reports else {}
 
     def create_params_set(
         self, minus_shift: int = 1, plus_shift: int = 1, **dict
@@ -146,21 +175,11 @@ class TimeFlops:
         )
         return result_set_dict
 
-    def plot_fitted_prediction(
-        self,
-    ):
-        for model_name, _ in self.models.items():
-            predictions = self.models[model_name]["current_model"].predict()
-            plt.figure()
-            plt.title(model_name)
-            plt.plot(self.train_data, color="blue")
-            plt.plot(predictions, color="red")
-            plt.show()
-
     def forecast(
         self,
+        model_name: str,
         steps: int = 1,
         best_model: bool = True,
-        save_result: bool = False,
     ):
-        pass
+        model_type = "best_model" if best_model else "current_model"
+        return self.models[model_name][model_type].forecast(steps)
