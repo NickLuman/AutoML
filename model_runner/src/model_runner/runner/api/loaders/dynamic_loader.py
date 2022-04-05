@@ -16,9 +16,12 @@ class DynamicLoader:
             logger.error(f"cannot find the {self.module_name} module")
             raise ModuleNotFoundError
 
-    def search_models(self, models_names: list[str]):
-        models = importlib.import_module(self.module_name)
-        class_in_module = inspect.getmembers(models, inspect.isclass)
+    def get_module(self):
+        return importlib.import_module(self.module_name)
+
+    @staticmethod
+    def search_models(module, models_names: list[str]):
+        class_in_module = inspect.getmembers(module, inspect.isclass)
 
         desired_class_set = set(models_names)
 

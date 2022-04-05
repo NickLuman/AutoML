@@ -1,20 +1,24 @@
 from itertools import product
 from copy import deepcopy
+from zipimport import zipimporter
 
-from api.models.dynamic_loader import DynamicLoader
-from api.metrics.metrics_api import MetricsAPI
 from loguru import logger
+
+from .api.loaders.dynamic_loader import DynamicLoader
+from .api.metrics.metrics_api import MetricsAPI
+from ..settings import settings
 
 
 class TimeFlops:
-    def __init__(self, models: dict):
+    def __init__(self, experiment_id: str, models: dict):
         logger.info("TimeFlops pipeline initializing")
-
+        self.experiment_id = experiment_id
         self.models = models
 
-    def _get_models(self, module_name: str, models: list[str]) -> dict:
+    def get_models_dynamic(self, module_name: str, models: list[str]):
         loader = DynamicLoader(module_name)
-        models, not_founded_models = loader.search_models(models)
+        module = loader.get_module()
+        models, not_founded_models = DynamicLoader.search_models(module, models)
 
         for model_name, model_class in models.items():
             self.models[model_name]["class"] = model_class
@@ -22,6 +26,17 @@ class TimeFlops:
         logger.warning(
             f"Impossible to find models with such names: {', '.join(not_founded_models)}"
         )
+
+        self.models = dict((k, v) for k, v in self.models.items() if v.get("class"))
+
+    def get_models_zip(self, models: dict):
+        for module_name, model in models.items():
+            importer = zipimporter(f"{settings.model_zip_folder}/{module_name}.zip")
+            module = importer.load_module(module_name)
+            model_cls, _ = DynamicLoader.search_models(module, [model])
+
+            for model_name, model_class in model_cls.items():
+                self.models[model_name]["class"] = model_class
 
         self.models = dict((k, v) for k, v in self.models.items() if v.get("class"))
 
@@ -68,9 +83,6 @@ class TimeFlops:
             report["metrics"].append(current_metric)
 
         return report
-
-    def _select_best_by_metric_result(self) -> list:
-        pass
 
     def search_best_models(
         self,
