@@ -1,11 +1,17 @@
+import imp
 import os
 import sys
 
 from fastapi import FastAPI
+from fastapi_sqlalchemy import DBSessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from .api.app_status import status_router
+from .api.v1.projects.views import project_router
+from .api.v1.models.views import model_router
+from .external.minio.minio_utils import connect_to_minio
+from .settings import settings
 
 app = FastAPI(
     title="AutoML Model Manager V1",
@@ -27,6 +33,8 @@ logger_config = {
 def create_app():
     logger.configure(**logger_config)
     app.include_router(status_router)
+    app.include_router(project_router)
+    app.include_router(model_router)
 
     app.add_middleware(
         CORSMiddleware,
@@ -35,5 +43,12 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.add_middleware(
+        DBSessionMiddleware,
+        db_url=f"postgresql://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}",
+    )
+
+    app.add_event_handler("startup", connect_to_minio)
 
     return app

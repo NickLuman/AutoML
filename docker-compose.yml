@@ -10,30 +10,46 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
-  influxdb-data-db:
-    image: influxdb:${INFLUXDB_VERSION}
+  minio:
+    image: 'minio/minio:${MINIO_VERSION}'
+    restart: "unless-stopped"
+    volumes: 
+    - minio_data:/data
+    command: server --address ${MINIO_HOST}:${MINIO_API_PORT} --console-address ":${MINIO_CONSOLE_PORT}" /data
     ports:
-      - ${INFLUXDB_PORTS}
-    volumes:
-      - influxdb-storage:/var/lib/influxdb
+      - ${MINIO_API_PORT}:${MINIO_API_PORT}
+      - ${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}
     environment:
-      - INFLUXDB_DB=db0
-      - INFLUXDB_ADMIN_USER=${INFLUXDB_USERNAME}
-      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_PASSWORD}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://${MINIO_HOST}:${MINIO_API_PORT}/minio/health/live"]
+        interval: 30s
+        timeout: 20s
+        retries: 3
+
+  model-runner: 
+    build: 
+      context: model_runner
+      dockerfile: Dockerfile
+    command: uvicorn src.__main__:app --host ${MODEL_RUNNER_HOST} --port ${MODEL_RUNNER_PORT} --reload
+    ports:
+      - ${MODEL_RUNNER_PORT}:${MODEL_RUNNER_PORT}
+    depends_on:
+      - postgres-meta-db
+      - minio
 
   model-manager:
     build: 
-      context: ./model_manager
+      context: model_manager
       dockerfile: Dockerfile 
-    volumes: 
-      - .model_manager/src:/src
+    command: bash -c "alembic upgrade head && uvicorn src.__main__:app --host ${MODEL_MANAGER_HOST} --port ${MODEL_MANAGER_PORT} --reload"
     ports:
-      - ${MODEL_MANAGER_PORTS}
-    command: uvicorn __main__:app --host 0.0.0.0 --port 8000
+      - ${MODEL_MANAGER_PORT}:${MODEL_MANAGER_PORT}
     depends_on:
       - postgres-meta-db
-      - influxdb-data-db
+      - minio
     
 volumes:
   postgres_data:
-  influxdb-storage:
+  minio_data: 
