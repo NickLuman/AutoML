@@ -16,6 +16,7 @@ scikit-learn = "^1.0.2"
 pandas = "^1.4.1"
 statsmodels = "^0.13.2"
 matplotlib = "^3.5.1"
+minio = "^7.1.5"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
