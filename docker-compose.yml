@@ -36,7 +36,6 @@ services:
     ports:
       - ${MODEL_RUNNER_PORT}:${MODEL_RUNNER_PORT}
     depends_on:
-      - postgres-meta-db
       - minio
 
   model-manager:

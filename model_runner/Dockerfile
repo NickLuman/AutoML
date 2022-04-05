@@ -16,10 +16,10 @@ RUN pip install poetry
 RUN poetry config virtualenvs.create false
 
 # COPY pyproject.toml alembic.ini poetry.lock /code
-COPY pyproject.toml poetry.lock /code
+COPY pyproject.toml poetry.lock .env /code
 RUN poetry install --no-dev
 
-COPY ./src /code/src
+COPY src /code/src
 # COPY  alembic  /code/alembic
 
-CMD ["uvicorn", "src.__main__:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["uvicorn", "src.__main__:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
