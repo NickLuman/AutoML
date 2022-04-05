@@ -14,6 +14,18 @@ class CreateModel(BaseModel):
         orm_mode = True
 
 
+class GetModel(BaseModel):
+    id: int
+    name: str
+    s3_bucket: str
+    module_name: str
+    class_name: str
+    project_id: int
+
+    class Config:
+        orm_mode = True
+
+
 class Model(BaseModel):
     id: int
     name: str

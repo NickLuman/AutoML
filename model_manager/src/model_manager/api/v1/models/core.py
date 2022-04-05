@@ -1,4 +1,3 @@
-from os import stat
 import tempfile
 import shutil
 
@@ -38,8 +37,8 @@ def create_model(model_raw: str, model_zip: UploadFile) -> int:
         db.session.add(db_model)
         db.session.commit()
 
-        tmp_filename = f"{tmp_dirpath}/{db_model.module_name}"
-        with open(tmp_filename, "wb") as buffer:
+        tmp_filepath = f"{tmp_dirpath}/{db_model.module_name}"
+        with open(tmp_filepath, "wb") as buffer:
             shutil.copyfileobj(model_zip.file, buffer)
 
         is_bucket_exists = minio_client.minio.bucket_exists(db_model.s3_bucket)
@@ -48,7 +47,7 @@ def create_model(model_raw: str, model_zip: UploadFile) -> int:
             minio_client.minio.make_bucket(db_model.s3_bucket)
 
         minio_client.minio.fput_object(
-            db_model.s3_bucket, f"{db_model.module_name}.zip", tmp_filename
+            db_model.s3_bucket, f"{db_model.module_name}.zip", tmp_filepath
         )
     except Exception as exc:
         logger.error(exc)
@@ -60,3 +59,9 @@ def create_model(model_raw: str, model_zip: UploadFile) -> int:
         )
     finally:
         shutil.rmtree(tmp_dirpath)
+
+
+def get_model_by_name(name: str):
+    model = db.session.query(DB_Model).filter(DB_Model.name == name).first()
+
+    return model
