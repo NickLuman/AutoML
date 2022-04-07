@@ -47,7 +47,12 @@ class TimeFlops:
         return (train, test)
 
     def _prepare_params(
-        self, model_name: str, params: dict, params_selection: bool = False
+        self,
+        model_name: str,
+        params: dict,
+        minus_shift: int,
+        plus_shift: int,
+        params_selection: bool = False,
     ) -> list:
         if not params:
             logger.error(f"No start params for initialize model {model_name}")
@@ -56,7 +61,7 @@ class TimeFlops:
         params_set = [params]
 
         if params_selection:
-            params_set = self.create_params_set(params=params)
+            params_set = self.create_params_set(minus_shift, plus_shift, params=params)
 
         return params_set
 
@@ -92,6 +97,8 @@ class TimeFlops:
         params_selection: bool = True,
         evaluate_metrics: str = "all",
         selection_metric: str = "",
+        minus_shift: int = 1,
+        plus_shift: int = 1,
     ):
         self.data = data
         self.target = target
@@ -111,7 +118,11 @@ class TimeFlops:
             model_params = model_data.get("params")
 
             model_params_set = self._prepare_params(
-                model_name, model_params, params_selection
+                model_name,
+                model_params,
+                params_selection,
+                minus_shift,
+                plus_shift,
             )
 
             reports = []
@@ -162,9 +173,7 @@ class TimeFlops:
     def get_best_reports(self) -> dict:
         return self.best_reports if self.best_reports else {}
 
-    def create_params_set(
-        self, minus_shift: int = 1, plus_shift: int = 1, **dict
-    ) -> map:
+    def create_params_set(self, minus_shift, plus_shift, **dict) -> map:
         params_set = []
         params = dict.get("params", {})
 

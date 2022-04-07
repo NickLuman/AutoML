@@ -1,22 +1,20 @@
 from datetime import datetime
 from io import StringIO
-from operator import mod
 from uuid import uuid4
 
 from fastapi import File
-from loguru import logger
 import pandas as pd
 
 from ....runner.timeflops import TimeFlops
-from ....external.minio.minio_utils import minio_client, get_model
+from ....external.minio.minio_utils import get_model
 from ....external.model_manager.requests import get_model_by_name
-from .models import ModelData, Metadata
+from .models import Metadata, BestReports, Metric, ModelData, Report
 
 
 async def fit_best_models(
     metadata: Metadata,
     data_file: File,
-):
+) -> BestReports:
     prepared_models = {}
 
     for model in metadata.models:
@@ -31,14 +29,28 @@ async def fit_best_models(
         prepared_models[model.name]["class"] = model_cls[model.name]
         prepared_models[model.name]["params"] = model.params
 
-    tf = TimeFlops(experiment_id=uuid4(), models=prepared_models)
-    df = get_df(data_file)
+    experiment_id = uuid4()
 
-    tf.search_best_models(df, metadata.target_column, selection_metric="R-2")
-    logger.info(tf.get_best_reports())
+    tf = TimeFlops(experiment_id, models=prepared_models)
+    df = _get_df(data_file)
+
+    tf.search_best_models(
+        df,
+        target=metadata.target_column,
+        split_coef=metadata.split_coef,
+        selection_metric=metadata.selection_metric,
+        params_selection=metadata.params_selection,
+        evaluate_metrics=metadata.evaluate_metrics,
+        minus_shift=metadata.minus_shift,
+        plus_shift=metadata.plus_shift,
+    )
+
+    best_reports = tf.get_best_reports()
+
+    return _map_best_reports(str(experiment_id), best_reports)
 
 
-def get_df(data_file: File):
+def _get_df(data_file: File):
     df = pd.read_csv(
         StringIO(str(data_file.file.read(), "utf-8")),
         header=0,
@@ -49,3 +61,24 @@ def get_df(data_file: File):
     )
 
     return df
+
+
+def _map_best_reports(experiment_id: str, reports: dict) -> BestReports:
+    best_reports = BestReports(experiment_id=experiment_id)
+    prepared_reports = []
+
+    for model_name, data in reports.items():
+        model_params = data.get("params", {})
+        model_data = ModelData(name=model_name, params=model_params)
+
+        metrics = []
+        for metric in data.get("metrics", ""):
+            report_metric = Metric(name=metric.name, value=metric.result_value)
+            metrics.append(report_metric)
+
+        report = Report(model_data=model_data, metrics=metrics)
+        prepared_reports.append(report)
+
+    best_reports.reports = prepared_reports
+
+    return best_reports
