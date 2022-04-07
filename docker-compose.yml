@@ -33,8 +33,6 @@ services:
       context: model_runner
       dockerfile: Dockerfile
     command: uvicorn src.__main__:app --host ${MODEL_RUNNER_HOST} --port ${MODEL_RUNNER_PORT} --reload
-    ports:
-      - ${MODEL_RUNNER_PORT}:${MODEL_RUNNER_PORT}
     depends_on:
       - minio
 
