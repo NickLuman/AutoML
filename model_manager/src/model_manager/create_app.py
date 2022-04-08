@@ -10,6 +10,7 @@ from loguru import logger
 from .api.app_status import status_router
 from .api.v1.projects.views import project_router
 from .api.v1.models.views import model_router
+from .api.v1.runner.view import runner_router
 from .external.minio.minio_utils import connect_to_minio
 from .settings import settings
 
@@ -32,9 +33,11 @@ logger_config = {
 
 def create_app():
     logger.configure(**logger_config)
+
     app.include_router(status_router)
     app.include_router(project_router)
     app.include_router(model_router)
+    app.include_router(runner_router)
 
     app.add_middleware(
         CORSMiddleware,
