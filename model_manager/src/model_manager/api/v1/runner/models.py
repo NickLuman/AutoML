@@ -24,9 +24,15 @@ class Metric(BaseModel):
     value: float
 
 
+class InformationCriterion(BaseModel):
+    name: str
+    value: float
+
+
 class Report(BaseModel):
     model_data: ModelData
     metrics: list[Metric]
+    ics: list[InformationCriterion]
 
 
 class BestReports(BaseModel):

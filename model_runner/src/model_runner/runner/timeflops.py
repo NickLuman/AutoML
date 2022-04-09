@@ -81,6 +81,7 @@ class TimeFlops:
         report = {
             "params": params,
             "metrics": [],
+            "ics": self._calculate_ic(model),
         }
         for metric in metrics_api.get_metrics():
             current_metric = deepcopy(metric)
@@ -88,6 +89,16 @@ class TimeFlops:
             report["metrics"].append(current_metric)
 
         return report
+
+    def _calculate_ic(self, model) -> list[dict]:
+        ics = []
+        try:
+            ics.append({"name": "aic", "value": model.calculate_aic()})
+            ics.append({"name": "bic", "value": model.calculate_bic()})
+        except Exception as exc:
+            logger.error(exc)
+            logger.warning("No such ic")
+        return ics
 
     def search_best_models(
         self,
@@ -125,7 +136,7 @@ class TimeFlops:
                 plus_shift,
             )
 
-            reports = []
+            self.reports = []
 
             for params in model_params_set:
                 prepared_params = dict(params) if params is not dict else params
@@ -140,7 +151,7 @@ class TimeFlops:
                 report = self._evaluate_model(model, test, metrics_api, prepared_params)
 
                 if report:
-                    reports.append(report)
+                    self.reports.append(report)
 
                     if selection_metric:
                         target_metric = next(

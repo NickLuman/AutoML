@@ -8,7 +8,13 @@ import pandas as pd
 from ....runner.timeflops import TimeFlops
 from ....external.minio.minio_utils import get_model
 from ....external.model_manager.requests import get_model_by_name
-from .models import Metadata, BestReports, Metric, ModelData, Report
+from .models import (
+    Metadata,
+    BestReports,
+    Metric,
+    ModelData,
+    Report,
+)
 
 
 async def fit_best_models(
@@ -76,7 +82,9 @@ def _map_best_reports(experiment_id: str, reports: dict) -> BestReports:
             report_metric = Metric(name=metric.name, value=metric.result_value)
             metrics.append(report_metric)
 
-        report = Report(model_data=model_data, metrics=metrics)
+        model_ics = data.get("ics", {})
+
+        report = Report(model_data=model_data, metrics=metrics, ics=model_ics)
         prepared_reports.append(report)
 
     best_reports.reports = prepared_reports
