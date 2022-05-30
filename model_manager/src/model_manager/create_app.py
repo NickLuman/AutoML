@@ -1,18 +1,17 @@
-import imp
 import os
 import sys
 
 from fastapi import FastAPI
-from fastapi_sqlalchemy import DBSessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_sqlalchemy import DBSessionMiddleware
 from loguru import logger
 
 from .api.app_status import status_router
-from .api.v1.projects.views import project_router
 from .api.v1.models.views import model_router
+from .api.v1.projects.views import project_router
 from .api.v1.runner.view import runner_router
 from .external.minio.minio_utils import connect_to_minio
-from .settings import settings
+from .external.postgres.db import SQLALCHEMY_DATABASE_URL
 
 app = FastAPI(
     title="AutoML Model Manager V1",
@@ -49,7 +48,7 @@ def create_app():
 
     app.add_middleware(
         DBSessionMiddleware,
-        db_url=f"postgresql://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}",
+        db_url=SQLALCHEMY_DATABASE_URL,
     )
 
     app.add_event_handler("startup", connect_to_minio)

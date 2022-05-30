@@ -1,12 +1,10 @@
-import imp
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-
-from src.model_manager.settings import settings
+from src.model_manager.external.postgres.db import SQLALCHEMY_DATABASE_URL
+from src.model_manager.external.postgres.models import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -14,7 +12,7 @@ config = context.config
 
 config.set_main_option(
     "sqlalchemy.url",
-    f"postgresql+psycopg2://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}",
+    SQLALCHEMY_DATABASE_URL,
 )
 
 fileConfig(config.config_file_name)
@@ -23,9 +21,9 @@ fileConfig(config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from src.model_manager.external.postgres import models
+from src.model_manager.external.postgres.db import Base
 
-target_metadata = models.Base.metadata
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
