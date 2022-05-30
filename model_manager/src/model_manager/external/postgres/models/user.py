@@ -13,8 +13,8 @@ class User(Base, TimestampMixin, DictMixin):
 
     username = Column(String, unique=True, nullable=False, index=True)
 
-    firstname = Column(String, nullable=True)
-    lastname = Column(String, nullable=True)
+    firstname = Column(String, default="")
+    lastname = Column(String, default="")
 
     email = Column(String, unique=True, nullable=False, index=True)
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from loguru import logger
 from pydantic import ValidationError
@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from .core import search_best_models
 from .models import BestReports, Metadata
 
-runner_router = APIRouter(prefix="/runner", tags=["runner"])
+runner_router = APIRouter(prefix="/api/v1/runner", tags=["runner"])
 
 
 @runner_router.post(

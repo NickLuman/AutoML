@@ -1,10 +1,11 @@
 from os import stat
-from fastapi import APIRouter, UploadFile, File, Form, status
+
+from fastapi import APIRouter, File, Form, UploadFile, status
 
 from .core import create_model, get_model_by_name
 from .models import GetModel
 
-model_router = APIRouter(prefix="/model", tags=["model"])
+model_router = APIRouter(prefix="/api/v1/model", tags=["model"])
 
 
 @model_router.post(

@@ -10,6 +10,7 @@ from .api.app_status import status_router
 from .api.v1.models.views import model_router
 from .api.v1.projects.views import project_router
 from .api.v1.runner.view import runner_router
+from .api.v1.users.views import user_router
 from .external.minio.minio_utils import connect_to_minio
 from .external.postgres.db import SQLALCHEMY_DATABASE_URL
 
@@ -37,6 +38,7 @@ def create_app():
     app.include_router(project_router)
     app.include_router(model_router)
     app.include_router(runner_router)
+    app.include_router(user_router)
 
     app.add_middleware(
         CORSMiddleware,

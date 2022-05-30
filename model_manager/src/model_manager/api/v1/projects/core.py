@@ -1,7 +1,7 @@
+from fastapi import HTTPException
 from fastapi_sqlalchemy import db
 
-from fastapi import HTTPException
-from ....external.postgres.models import Project as DB_Project
+from ....external.postgres.models.project import Project as DB_Project
 from .models import CreateProject
 
 

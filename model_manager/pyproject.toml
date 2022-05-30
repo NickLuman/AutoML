@@ -15,8 +15,10 @@ alembic = "^1.7.7"
 psycopg2-binary = "^2.9.3"
 SQLAlchemy = "^1.4.32"
 FastAPI-SQLAlchemy = "^0.2.1"
-pydantic = {extras = ["dotenv"], version = "^1.9.0"}
+pydantic = {extras = ["dotenv", "email"], version = "^1.9.1"}
 minio = "^7.1.5"
+PyJWT = "^2.4.0"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 [tool.poetry.dev-dependencies]
 black = "^21.12b0"
