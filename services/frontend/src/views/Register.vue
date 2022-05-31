@@ -56,7 +56,7 @@
       </div>
       <div class="row justify-content-center">
         <div>
-          <button type="submit" class="btn btn-register col-9">Зарегистрироваться</button>
+          <button type="submit" class="btn btn-submit col-9">Зарегистрироваться</button>
         </div>
       </div>
     </form>
@@ -65,9 +65,9 @@
 
 <script>
 import { mapActions } from 'vuex';
-import LockIcon from '@/components/LockIcon.vue'
-import UserIcon from '@/components/UserIcon.vue'
-import LetterIcon from '@/components/LetterIcon.vue'
+import LockIcon from '@/components/icons/LockIcon.vue'
+import UserIcon from '@/components/icons/UserIcon.vue'
+import LetterIcon from '@/components/icons/LetterIcon.vue'
 export default {
   components: {
     LockIcon,
@@ -90,7 +90,6 @@ export default {
       try {
         await this.register(this.user);
       } catch (error) {
-        console.log(error.message())
         throw error.message();
       }
     },
@@ -111,13 +110,14 @@ export default {
   border: 1px solid rgb(119,119,118); 
 }
 
-.btn-register {
+.btn-submit {
   background-color: rgb(223, 198, 147); 
   font-size: 1.5rem;
 }
 
-.btn-register:hover {
+.btn-submit:hover {
   box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  color: rgb(100,100,100);
 }
 
 .form-control, .input-group-text {
@@ -130,5 +130,9 @@ export default {
   background-color: rgb(31,32,41); 
   border: 1px solid rgb(119,119,118);
   color: white;
+}
+
+h1 {
+  color: rgb(210,206,196);
 }
 </style>
