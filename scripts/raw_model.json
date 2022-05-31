@@ -1,0 +1,32 @@
+{
+    "add_model": {
+        "id": 1,
+        "name": "ArDLStatsModels",
+        "description": "",
+        "s3_bucket": "models",
+        "module_name": "ardl_statsmodels",
+        "class_name": "ArDLStatsModels",
+        "project_id": 1,
+        "user_id": 1
+    },
+    "start_learning": {
+        "models": [
+            {
+                "name": "ArDLStatsModels",
+                "params": {
+                    "lags": 15
+                }
+            }
+        ],
+        "target_column": "IPG2211A2N",
+        "split_coef": 0.8,
+        "evaluate_metrics": [
+            "R-2",
+            "RMSE"
+        ],
+        "selection_metric": "R-2",
+        "params_selection": true,
+        "minus_shift": 2,
+        "plus_shift": 2
+    }
+}

@@ -27,14 +27,14 @@ user_router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
 
 @user_router.post(
-    "/",
+    "/register",
     response_model=UserPublic,
     name="user:register-new-user",
     status_code=status.HTTP_201_CREATED,
 )
 async def register_new_user_view(
     response: Response,
-    new_user: UserCreate = Body(..., embed=True),
+    new_user: UserCreate = Body(...),
     db: Session = Depends(get_db),
 ):
     created_user = register_new_user(new_user=new_user, db=db)
@@ -97,7 +97,7 @@ async def get_user_view(
 async def user_login_with_usernames_and_password(
     response: Response,
     db: Session = Depends(get_db),
-    form_data: UserEnter = Body(..., embed=True),
+    form_data: UserEnter = Body(...),
 ) -> str:
     user = authenticate_user(
         username=form_data.username,
@@ -130,7 +130,7 @@ async def user_login_with_usernames_and_password(
 )
 async def update_user_data_view(
     session: str = Cookie(None),
-    update_data: UserUpdate = Body(..., embed=True),
+    update_data: UserUpdate = Body(...),
     db: Session = Depends(get_db),
 ):
     check_jwt_token_validity(session)

@@ -1,20 +1,22 @@
 version: '3.8'
 
-services: 
+services:
   postgres-meta-db:
     image: postgres:${POSTGRES_VERSION}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment: 
+    environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - 5432:5432
 
   minio:
     image: 'minio/minio:${MINIO_VERSION}'
     restart: "unless-stopped"
-    volumes: 
-    - minio_data:/data
+    volumes:
+      - minio_data:/data
     command: server --address ${MINIO_HOST}:${MINIO_API_PORT} --console-address ":${MINIO_CONSOLE_PORT}" /data
     ports:
       - ${MINIO_API_PORT}:${MINIO_API_PORT}
@@ -23,30 +25,45 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     healthcheck:
-        test: ["CMD", "curl", "-f", "http://${MINIO_HOST}:${MINIO_API_PORT}/minio/health/live"]
-        interval: 30s
-        timeout: 20s
-        retries: 3
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://${MINIO_HOST}:${MINIO_API_PORT}/minio/health/live"
+        ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
-  model-runner: 
-    build: 
+  model-runner:
+    build:
       context: model_runner
       dockerfile: Dockerfile
     command: uvicorn src.__main__:app --host ${MODEL_RUNNER_HOST} --port ${MODEL_RUNNER_PORT} --reload
     depends_on:
       - minio
 
-  model-manager:
-    build: 
-      context: model_manager
-      dockerfile: Dockerfile 
-    command: bash -c "alembic upgrade head && uvicorn src.__main__:app --host ${MODEL_MANAGER_HOST} --port ${MODEL_MANAGER_PORT} --reload"
-    ports:
-      - ${MODEL_MANAGER_PORT}:${MODEL_MANAGER_PORT}
-    depends_on:
-      - postgres-meta-db
-      - minio
-    
+  # model-manager:
+  #   build:
+  #     context: model_manager
+  #     dockerfile: Dockerfile
+  #   command: bash -c "alembic upgrade head && uvicorn src.__main__:app --host ${MODEL_MANAGER_HOST} --port ${MODEL_MANAGER_PORT} --reload"
+  #   ports:
+  #     - ${MODEL_MANAGER_PORT}:${MODEL_MANAGER_PORT}
+  #   depends_on:
+  #     - postgres-meta-db
+  #     - minio
+  # frontend:
+  #   build:
+  #     context: services/frontend
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - './services/frontend:/app'
+  #     - '/app/node_modules'
+  #   ports:
+  #     - ${FRONTEND_PORT}:${FRONTEND_PORT}
+
 volumes:
   postgres_data:
-  minio_data: 
+  minio_data:
