@@ -3,18 +3,19 @@ import VueRouter from 'vue-router'
 
 import store from '@/store';
 
-import Home from '@/views/Home.vue'
+// import Home from '@/views/Home.vue'
 import Register from '@/views/Register.vue'
 import Login from '@/views/Login.vue'
+import Dashboard from '@/views/Dashboard.vue'
 
 Vue.use(VueRouter);
 
 const routes = [
-  {
-    path: '/',
-    name: "Home",
-    component: Home,
-  },
+  // {
+  //   path: '/',
+  //   name: "Home",
+  //   component: Home,
+  // },
   {
     path: '/register',
     name: 'Register',
@@ -24,6 +25,12 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard,
+    meta: { requiresAuth: true },
   }
 ]
 
@@ -39,7 +46,7 @@ router.beforeEach((to, from, next) => {
       next();
       return;
     }
-    next('/login');
+    next({ name: 'Login' });
   } else {
     next();
   }

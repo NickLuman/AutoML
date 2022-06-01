@@ -20,12 +20,8 @@ const actions = {
     },
     async viewMe({ commit }) {
         let { data } = await axios.get('api/v1/user/');
-        console.log(data)
         await commit('setUser', data);
     },
-    // async deleteUser({ }, id) {
-    //     await axios.delete(`user/${id}`);
-    // },
     async logOut({ commit }) {
         let user = null;
         commit('logout', user);
