@@ -4,7 +4,8 @@ from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from ....external.postgres.models.user import User
-from .authentication import AuthService, JWTBearer
+from ..base.utils import get_user_by_username as get_user_db
+from .authentication import AuthService
 from .models import UserCreate, UserInDB, UserUpdate
 
 auth_service = AuthService()
@@ -104,10 +105,10 @@ def get_user(*, username: str, db: Session) -> UserInDB:
 
 
 def update_user_data(*, username: str, update_data: UserUpdate, db: Session) -> UserInDB:
-    user_record = db.query(User).filter(User.username == username).first()
-
-    if not user_record:
-        return
+    user_record = get_user_db(
+        username=username,
+        db=db,
+    )
 
     for attr, val in update_data.dict().items():
         setattr(user_record, attr, val)
@@ -119,12 +120,3 @@ def update_user_data(*, username: str, update_data: UserUpdate, db: Session) -> 
     db.commit()
 
     return user
-
-
-def check_jwt_token_validity(session):
-    if not JWTBearer.verify_jwt(session):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )

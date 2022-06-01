@@ -1,13 +1,13 @@
-from fastapi import APIRouter, Body, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Body, Cookie, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from ....external.postgres.db_utils import get_db
 from ....settings import settings
+from ..base.utils import check_jwt_token_validity
 from .authentication import AuthService
 from .core import (
     auth_service,
     authenticate_user,
-    check_jwt_token_validity,
     get_user,
     register_new_user,
     update_user_data,
