@@ -1,27 +1,106 @@
-from fastapi import APIRouter
+from http import HTTPStatus
 
-from .core import create_project, get_project_by_id
-from .models import CreateProject, Project
+from fastapi import APIRouter, Cookie, Depends, Response, status
+from sqlalchemy.orm import Session
 
-project_router = APIRouter(prefix="/project", tags=["project"])
+from ....external.postgres.db_utils import get_db
+from ..base.utils import check_jwt_token_validity
+from ..users.authentication import AuthService
+from .core import (
+    create_new_project,
+    delete_project_by_name,
+    get_project_by_name,
+    get_user_projects,
+)
+from .models import ProjectCreate, ProjectPublic
+
+project_router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
 
 
 @project_router.post(
     "/",
-    response_model=int,
-    status_code=201,
+    response_model=ProjectPublic,
+    name="projects:create-new-project",
+    status_code=status.HTTP_201_CREATED,
 )
-async def add_project(project: CreateProject):
-    id = create_project(project)
-    return id
+async def create_new_project_view(
+    new_project: ProjectCreate,
+    session: str = Cookie(None),
+    db: Session = Depends(get_db),
+):
+    check_jwt_token_validity(session)
+    username = AuthService.get_usernameJWT(session)
+
+    created_project = create_new_project(
+        username=username,
+        new_project=new_project,
+        db=db,
+    )
+
+    return ProjectPublic(**created_project.dict())
 
 
 @project_router.get(
-    "/{id}",
-    response_model=Project,
-    status_code=200,
+    "/{name}",
+    response_model=ProjectPublic,
+    name="projects:get-project",
+    status_code=status.HTTP_200_OK,
 )
-async def get_project(id: int):
-    project = get_project_by_id(id)
+async def get_project_view(
+    name: str,
+    session: str = Cookie(None),
+    db: Session = Depends(get_db),
+):
+    check_jwt_token_validity(session)
+    username = AuthService.get_usernameJWT(session)
 
-    return project
+    found_project = get_project_by_name(
+        username=username,
+        name=name,
+        db=db,
+    )
+
+    return ProjectPublic(**found_project.dict())
+
+
+@project_router.get(
+    "/",
+    response_model=list[ProjectPublic],
+    name="projects:get-all-projects",
+    status_code=status.HTTP_200_OK,
+)
+async def get_all_projects_view(
+    session: str = Cookie(None),
+    db: Session = Depends(get_db),
+):
+    check_jwt_token_validity(session)
+    username = AuthService.get_usernameJWT(session)
+
+    found_projects = get_user_projects(
+        username=username,
+        db=db,
+    )
+
+    return [ProjectPublic(**project.dict()) for project in found_projects]
+
+
+@project_router.delete(
+    "/{name}",
+    name="projects:delete-project",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_project_view(
+    name: str,
+    session: str = Cookie(None),
+    db: Session = Depends(get_db),
+):
+    check_jwt_token_validity(session)
+    username = AuthService.get_usernameJWT(session)
+
+    delete_project_by_name(
+        username=username,
+        name=name,
+        db=db,
+    )
+
+    return Response(status_code=HTTPStatus.NO_CONTENT.value)

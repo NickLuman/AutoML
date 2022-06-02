@@ -23,7 +23,7 @@ from .models import (
 )
 from .token import AccessToken
 
-user_router = APIRouter(prefix="/api/v1/user", tags=["user"])
+user_router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
 @user_router.post(
