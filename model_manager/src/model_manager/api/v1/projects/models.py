@@ -34,27 +34,3 @@ class ProjectPublic(DateTimeModelMixin, ProjectBase):
 
 class ProjectGet(CoreModel):
     name: str
-
-
-# class CreateProject(BaseModel):
-#     name: str
-#     description: str
-#     created_at: datetime
-#     status: str
-
-#     class Config:
-#         orm_mode = True
-
-
-# class Project(BaseModel):
-#     id: int
-#     name: str
-#     description: str
-#     user_id: int
-#     created_at: datetime
-#     status: str
-#     models: list[Model]
-#     modules: list[Module]
-
-#     class Config:
-#         orm_mode = True
