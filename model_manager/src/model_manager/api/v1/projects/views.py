@@ -14,10 +14,10 @@ from .core import (
 )
 from .models import ProjectCreate, ProjectPublic
 
-project_router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
+projects_router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
 
 
-@project_router.post(
+@projects_router.post(
     "/",
     response_model=ProjectPublic,
     name="projects:create-new-project",
@@ -40,7 +40,7 @@ async def create_new_project_view(
     return ProjectPublic(**created_project.dict())
 
 
-@project_router.get(
+@projects_router.get(
     "/{name}",
     response_model=ProjectPublic,
     name="projects:get-project",
@@ -63,7 +63,7 @@ async def get_project_view(
     return ProjectPublic(**found_project.dict())
 
 
-@project_router.get(
+@projects_router.get(
     "/",
     response_model=list[ProjectPublic],
     name="projects:get-all-projects",
@@ -84,7 +84,7 @@ async def get_all_projects_view(
     return [ProjectPublic(**project.dict()) for project in found_projects]
 
 
-@project_router.delete(
+@projects_router.delete(
     "/{name}",
     name="projects:delete-project",
     status_code=status.HTTP_204_NO_CONTENT,

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from ....external.postgres.models.project import Project
 from ..base.utils import get_user_by_username as get_user_db
-from .models import ProjectCreate, ProjectGet, ProjectInDB
+from .models import ProjectCreate, ProjectInDB
 
 
 def create_new_project(

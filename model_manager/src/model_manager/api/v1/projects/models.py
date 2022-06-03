@@ -30,7 +30,3 @@ class ProjectInDB(DateTimeModelMixin, ProjectBase):
 class ProjectPublic(DateTimeModelMixin, ProjectBase):
     class Config:
         orm_mode = True
-
-
-class ProjectGet(CoreModel):
-    name: str

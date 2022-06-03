@@ -1,27 +1,35 @@
-from os import stat
+from fastapi import APIRouter, Cookie, Depends, status
+from sqlalchemy.orm import Session
 
-from fastapi import APIRouter, File, Form, UploadFile, status
+from ....external.postgres.db_utils import get_db
+from ..base.utils import check_jwt_token_validity
+from ..users.authentication import AuthService
+from .core import create_new_model
+from .models import ModelCreate, ModelPublic
 
-from .core import create_model, get_model_by_name
-from .models import GetModel
-
-model_router = APIRouter(prefix="/api/v1/model", tags=["model"])
+models_router = APIRouter(prefix="/api/v1/models", tags=["models"])
 
 
-@model_router.post(
-    "/",
-    response_model=int,
+@models_router.post(
+    "/{project_name}",
+    response_model=ModelPublic,
+    name="models:create-new-model",
     status_code=status.HTTP_201_CREATED,
 )
-async def add_model(model_raw: str = Form(...), model_zip: UploadFile = File(...)):
-    id = create_model(model_raw, model_zip)
-    return id
+async def create_new_model_view(
+    project_name: str,
+    new_model: ModelCreate,
+    session: str = Cookie(None),
+    db: Session = Depends(get_db),
+):
+    check_jwt_token_validity(session)
+    username = AuthService.get_usernameJWT(session)
 
+    created_model = create_new_model(
+        username=username,
+        project_name=project_name,
+        new_model=new_model,
+        db=db,
+    )
 
-@model_router.get(
-    "/{name}",
-    response_model=GetModel,
-    status_code=status.HTTP_200_OK,
-)
-async def get_model(name: str):
-    return get_model_by_name(name)
+    return ModelPublic(**created_model.dict())

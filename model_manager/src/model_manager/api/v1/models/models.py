@@ -1,40 +1,27 @@
-from pydantic import BaseModel
+from typing import Optional
+
+from pydantic import constr
+
+from ..base.models.core import CoreModel, DateTimeModelMixin
 
 
-class CreateModel(BaseModel):
-    name: str
+class ModelBase(CoreModel):
+    name: Optional[str]
+    description: Optional[str]
+
+
+class ModelCreate(CoreModel):
+    name: constr(min_length=4, max_length=128)
     description: str
-    user_id: int
-    s3_bucket: str
-    module_name: str
-    class_name: str
-    project_id: int
+
+
+class ModelInDB(DateTimeModelMixin, ModelBase):
+    project_id: str
 
     class Config:
         orm_mode = True
 
 
-class GetModel(BaseModel):
-    id: int
-    name: str
-    s3_bucket: str
-    module_name: str
-    class_name: str
-    project_id: int
-
-    class Config:
-        orm_mode = True
-
-
-class Model(BaseModel):
-    id: int
-    name: str
-    description: str
-    user_id: int
-    s3_bucket: str
-    module_name: str
-    class_name: str
-    project_id: int
-
+class ModelPublic(DateTimeModelMixin, ModelBase):
     class Config:
         orm_mode = True

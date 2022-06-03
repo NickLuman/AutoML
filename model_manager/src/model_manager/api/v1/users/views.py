@@ -23,10 +23,10 @@ from .models import (
 )
 from .token import AccessToken
 
-user_router = APIRouter(prefix="/api/v1/users", tags=["users"])
+users_router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
-@user_router.post(
+@users_router.post(
     "/register",
     response_model=UserPublic,
     name="user:register-new-user",
@@ -56,7 +56,7 @@ async def register_new_user_view(
     return UserPublic(**created_user.dict())
 
 
-@user_router.get(
+@users_router.get(
     "/",
     response_model=UserPublicEnter,
     name="user:get-user",
@@ -90,7 +90,7 @@ async def get_user_view(
     return UserPublicEnter(username=user.username, email=user.email)
 
 
-@user_router.post(
+@users_router.post(
     "/login/token",
     name="user:login-and-password",
 )
@@ -122,7 +122,7 @@ async def user_login_with_usernames_and_password(
     return UserLogin(**user.dict())
 
 
-@user_router.put(
+@users_router.put(
     "/",
     response_model=UserUpdatePublic,
     name="user:update-user",

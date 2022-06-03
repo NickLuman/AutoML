@@ -7,10 +7,11 @@ from fastapi_sqlalchemy import DBSessionMiddleware
 from loguru import logger
 
 from .api.app_status import status_router
-from .api.v1.models.views import model_router
-from .api.v1.projects.views import project_router
+from .api.v1.model_versions.views import model_versions_router
+from .api.v1.models.views import models_router
+from .api.v1.projects.views import projects_router
 from .api.v1.runner.view import runner_router
-from .api.v1.users.views import user_router
+from .api.v1.users.views import users_router
 from .external.minio.minio_utils import connect_to_minio
 from .external.postgres.db import SQLALCHEMY_DATABASE_URL
 
@@ -35,10 +36,11 @@ def create_app():
     logger.configure(**logger_config)
 
     app.include_router(status_router)
-    app.include_router(project_router)
-    app.include_router(model_router)
+    app.include_router(users_router)
+    app.include_router(projects_router)
+    app.include_router(models_router)
+    app.include_router(model_versions_router)
     app.include_router(runner_router)
-    app.include_router(user_router)
 
     app.add_middleware(
         CORSMiddleware,

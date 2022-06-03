@@ -1,67 +1,60 @@
-import tempfile
-import shutil
-
-from fastapi_sqlalchemy import db
-from fastapi import HTTPException, status, UploadFile
-from fastapi.encoders import jsonable_encoder
+from fastapi import HTTPException, status
 from loguru import logger
-from pydantic import ValidationError
+from sqlalchemy.orm import Session
 
-from ....external.minio.minio import minio_client
-from ....external.postgres.models import Model as DB_Model
-from .models import CreateModel
+from ....external.postgres.models.model import Model
+from ..base.utils import get_user_by_username as get_user_db
+from ..base.utils import get_user_project_by_name as get_project_db
+from .models import ModelCreate, ModelInDB
 
 
-def create_model(model_raw: str, model_zip: UploadFile) -> int:
-    try:
-        model = CreateModel.parse_raw(model_raw)
-    except ValidationError as exc:
+def create_new_model(
+    *, username: str, project_name: str, new_model: ModelCreate, db: Session
+) -> ModelInDB:
+    user_record = get_user_db(
+        username=username,
+        db=db,
+    )
+
+    project_record = get_project_db(user=user_record, name=project_name, db=db)
+
+    db_model = (
+        db.query(Model)
+        .with_parent(project_record)
+        .filter(Model.name == new_model.name)
+        .first()
+    )
+
+    if db_model:
         raise HTTPException(
-            detail=jsonable_encoder(exc.errors()),
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        ) from exc
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Model with such name already exists",
+        )
 
-    tmp_dirpath = tempfile.mkdtemp()
+    model = None
 
     try:
-        db_model = DB_Model(
-            name=model.name,
-            description=model.description,
-            user_id=model.user_id,
-            s3_bucket=model.s3_bucket,
-            module_name=model.module_name,
-            class_name=model.class_name,
-            project_id=model.project_id,
-        )
+        addtional_data = {"project_id": project_record.id}
 
-        db.session.add(db_model)
-        db.session.commit()
+        updated_model_params = new_model.copy(update=addtional_data)
 
-        tmp_filepath = f"{tmp_dirpath}/{db_model.module_name}"
-        with open(tmp_filepath, "wb") as buffer:
-            shutil.copyfileobj(model_zip.file, buffer)
+        created_model = Model(**updated_model_params.dict())
+        db.add(created_model)
 
-        is_bucket_exists = minio_client.minio.bucket_exists(db_model.s3_bucket)
+        db.flush()
 
-        if not is_bucket_exists:
-            minio_client.minio.make_bucket(db_model.s3_bucket)
+        model = ModelInDB(**created_model.__dict__)
 
-        minio_client.minio.fput_object(
-            db_model.s3_bucket, f"{db_model.module_name}.zip", tmp_filepath
-        )
+        db.commit()
+
     except Exception as exc:
         logger.error(exc)
-        db.session.rollback()
+
+        db.rollback()
 
         raise HTTPException(
-            detail=f"impossible to save model {model.name}",
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Model isn't created",
         )
-    finally:
-        shutil.rmtree(tmp_dirpath)
-
-
-def get_model_by_name(name: str):
-    model = db.session.query(DB_Model).filter(DB_Model.name == name).first()
 
     return model
