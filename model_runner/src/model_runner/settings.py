@@ -9,6 +9,8 @@ class Settings(BaseSettings):
 
     model_manager_host: str
     model_manager_port: int
+    model_manager_username: str
+    model_manager_password: str
 
     class Config:
         env_file = ".env"

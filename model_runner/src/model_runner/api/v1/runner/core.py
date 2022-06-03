@@ -2,19 +2,13 @@ from datetime import datetime
 from io import StringIO
 from uuid import uuid4
 
-from fastapi import File
 import pandas as pd
+from fastapi import File
 
-from ....runner.timeflops import TimeFlops
 from ....external.minio.minio_utils import get_model
 from ....external.model_manager.requests import get_model_by_name
-from .models import (
-    Metadata,
-    BestReports,
-    Metric,
-    ModelData,
-    Report,
-)
+from ....runner.timeflops import TimeFlops
+from .models import BestReports, Metadata, Metric, ModelData, Report
 
 
 async def fit_best_models(
@@ -25,6 +19,7 @@ async def fit_best_models(
 
     for model in metadata.models:
         model_data = await get_model_by_name(model.name)
+        model.name = model.name.split("/")[-1]
         s3_bucket, module_name, class_name = (
             model_data.get("s3_bucket"),
             model_data.get("module_name"),
@@ -62,7 +57,7 @@ def _get_df(data_file: File):
         header=0,
         parse_dates=[0],
         index_col=0,
-        date_parser=lambda x: datetime.strptime(x, "%m/%d/%Y"),
+        date_parser=lambda x: datetime.strptime(x, "%Y-%m-%d"),
         encoding="utf-8",
     )
 
