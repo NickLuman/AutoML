@@ -97,3 +97,31 @@ def create_new_model_version(
         shutil.rmtree(tmp_dirpath)
 
     return model_version
+
+
+def get_model_version_by_name(
+    *, username: str, project_name: str, model_name: str, name: str, db: Session
+) -> ModelVersionInDB:
+    user_record = get_user_db(
+        username=username,
+        db=db,
+    )
+
+    model_record = get_model_db(
+        user=user_record, project_name=project_name, name=model_name, db=db
+    )
+
+    db_model_version = (
+        db.query(ModelVersion)
+        .with_parent(model_record)
+        .filter(ModelVersion.name == name)
+        .first()
+    )
+
+    if not db_model_version:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model Version doesn't exist",
+        )
+
+    return ModelVersionInDB(**db_model_version.__dict__)

@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from ....external.postgres.db_utils import get_db
 from ..base.utils import check_jwt_token_validity
 from ..users.authentication import AuthService
-from .core import create_new_model_version
-from .models import ModelVersionCreate, ModelVersionPublic
+from .core import create_new_model_version, get_model_version_by_name
+from .models import ModelVersionPublic
 
 model_versions_router = APIRouter(
     prefix="/api/v1/model-versions", tags=["model-versions"]
@@ -39,3 +39,30 @@ async def create_new_model_version_view(
     )
 
     return ModelVersionPublic(**created_model_version.dict())
+
+
+@model_versions_router.get(
+    "/{project_name}/{model_name}/{name}",
+    response_model=ModelVersionPublic,
+    name="projects:get-project",
+    status_code=status.HTTP_200_OK,
+)
+async def get_model_version_view(
+    project_name: str,
+    model_name: str,
+    name: str,
+    session: str = Cookie(None),
+    db: Session = Depends(get_db),
+):
+    check_jwt_token_validity(session)
+    username = AuthService.get_usernameJWT(session)
+
+    found_model_version = get_model_version_by_name(
+        username=username,
+        project_name=project_name,
+        model_name=model_name,
+        name=name,
+        db=db,
+    )
+
+    return ModelVersionPublic(**found_model_version.dict())
